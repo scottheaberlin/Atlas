@@ -1881,6 +1881,40 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'jnj_chart', 'colorbrewe
 					}
 				});
 				break; // Entropy report
+			case 'Timeliness':
+				$.ajax({
+					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/timeliness',
+					success: function (data) {
+						self.model.currentReport(self.model.reportReportName());
+						self.model.loadingReport(false);
+
+						var timelinessData = self.normalizeArray(data, true);
+						if (!timelinessData.empty) {
+							var byDateSeries = self.mapDateDataToSeries(timelinessData, {
+
+								dateField: 'date',
+								yValue: 'entropy',
+								yPercent: 'entropy'
+							});
+
+							var timelinessByDate  = new jnj_chart.line();
+							timelinessByDate.render(byDateSeries, "#timelinessByDate", 400, 200, {
+								xScale: d3.time.scale().domain(d3.extent(byDateSeries[0].values, function (d) {
+									return d.xValue;
+								})),
+								//use this if scale from min~max in y-axis
+//								yScale: d3.time.scale().domain(d3.extent(byDateSeries[0].values, function (d) {
+//									return d.yValue;
+//								})),
+								xFormat: d3.time.format("%Y/%m/%d"),
+								tickFormat: d3.time.format("%Y"),
+								xLabel: "Date",
+								yLabel: "Delay in Day"
+							});
+						}
+					}
+				});
+				break; // Timeliness report
 			}
 		}
 
@@ -2862,7 +2896,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'jnj_chart', 'colorbrewe
 			if (data && !data.empty) {
 				for (var i = 0; i < data[options.dateField].length; i++) {
 					series.values.push({
-						xValue: new Date(data[options.dateField][i]),
+						xValue: new Date(new Date(data[options.dateField][i]).getTime() + (new Date().getTimezoneOffset() + 60) * 60000), //offset timezone for date of "yyyy-mm-dd"
 						yValue: data[options.yValue][i],
 						yPercent: data[options.yPercent][i]
 					});

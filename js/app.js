@@ -922,6 +922,10 @@ define(['jquery', 'knockout', 'jnj_chart', 'd3', 'ohdsi.util', 'appConfig', 'web
 			name: "Entropy",
 			reportKey: "Entropy",
 			analyses: [2031]
+        }, {
+			name: "Timeliness",
+			reportKey: "Timeliness",
+			analyses: [2051]
         }]);
 		/*
         self.reports = ko.observableArray([
