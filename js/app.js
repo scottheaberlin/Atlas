@@ -42,6 +42,10 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
 				case 'profiles':
 					pageTitle = pageTitle + ": Profiles";
 					break;
+				case 'plp-browser':
+				case 'plp-manager':
+					pageTitle = pageTitle + ": PLP";
+					break;
 			}
 
 			if (self.hasUnsavedChanges()) {
@@ -107,6 +111,25 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
 							self.loadCohortDefinition(cohortDefinitionId, conceptSetId, 'cohort-definition-manager', 'details');
 						});
 					},
+						'/plp': function () {
+							require(['plp-browser', 'plp-manager', 'plp-inspector'], function () {
+								self.componentParams = {
+									model: self
+								};
+								self.currentView('plp-browser');
+							});
+						},
+						'/plp/:modelId:': function (modelId) {
+							require(['plp-manager', 'plp-inspector', 'plp-roc', 'plp-calibration', 'plp-spec-editor', 'plp-r-code', 'plp-print-friendly', 'cohort-definition-browser', 'components/atlas.cohort-editor'], function () {
+								self.currentPatientLevelPredictionId(+modelId);
+								self.componentParams = {
+									currentPatientLevelPredictionId: self.currentPatientLevelPredictionId,
+									currentPatientLevelPrediction: self.currentPatientLevelPrediction,
+									dirtyFlag: self.currentPatientLevelPredictionDirtyFlag,
+								};
+								self.currentView('plp-manager');
+							});
+						},
 					'/datasources': function () {
 						require(['data-sources'], function () {
 							self.componentParams = {
@@ -1384,6 +1407,19 @@ define(['jquery', 'knockout', 'ohdsi.util', 'appConfig', 'webapi/AuthAPI', 'atla
 		self.conceptSetInclusionIdentifiers = ko.observableArray();
 		self.currentConceptSetExpressionJson = ko.observable();
 		self.currentConceptIdentifierList = ko.observable();
+		self.currentPatientLevelPredictionId = ko.observable();
+		self.currentPatientLevelPrediction = ko.observable();
+		self.currentPatientLevelPredictionDirtyFlag = ko.observable(new ohdsiUtil.dirtyFlag(self.currentPatientLevelPrediction()));
+		self.plpCss = ko.pureComputed(function () {
+			if (self.currentPatientLevelPrediction())
+				return self.currentPatientLevelPredictionDirtyFlag().isDirty() ? "unsaved" : "open";
+		});
+		self.plpURL = ko.pureComputed(function () {
+			var url = "#/plp";
+			if (self.currentPatientLevelPrediction())
+				url = url + "/" + (self.currentPatientLevelPrediction().analysisId || 0);
+			return url;
+		});
 
 		self.currentConceptSet = ko.observable();
 		self.currentConceptSetDirtyFlag = new ohdsiUtil.dirtyFlag({

@@ -4,6 +4,8 @@ define([], function () {
 
     options.dayOptions = ['0', '1', '7', '14', '21', '30', '60', '90', '120', '180', '365', '548', '730', '1095'];
     options.monthOptions = [1, 3, 6, 9, 12, 24, 36];
+    options.sampleSizeOptions = ['1000', '5000', '10000', '50000', '100000'];
+    options.delCovariatesSmallCount = ['5', '10', '15', '20', '25', '50', '75', '100', '150', '200', '500']
 
     options.ageOptions = new Array();
     for (i = 1; i < 100; i++) {
