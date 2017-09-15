@@ -1,94 +1,99 @@
-define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbrewer', 'lodash', 'appConfig', 'knockout.dataTables.binding','faceted-datatable'], function (ko, view, d3, atlascharts, colorbrewer, _, config) {
+define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbrewer', 'lodash', 'appConfig', 'knockout.dataTables.binding', 'faceted-datatable'], function (ko, view, d3, atlascharts, colorbrewer, _, config) {
 	function reportManager(params) {
 		var self = this;
 		self.model = params.model;
+		self.config = config;
 		self.cohortCaption = ko.observable('Click Here to Choose a Cohort');
-        self.showSelectionArea = params.showSelectionArea == undefined ? true : params.showSelectionArea;
+		self.showSelectionArea = params.showSelectionArea == undefined ? true : params.showSelectionArea;
 		self.reference = ko.observableArray();
 		self.dataCompleteReference = ko.observableArray();
 		self.heelOptions = {
-				Facets: [
-				         {'caption': 'Error Msg',
-						  'binding': d => { 
-		                        if (d.attributeName < 10) {
-		                            return 'Person'
-		                        } else if ((d.attributeName >= 100 && d.attributeName < 200) || (d.attributeName >= 800 && d.attributeName < 900)) {
-		                            return 'Observation'
-		                        } else if (d.attributeName >= 200 && d.attributeName < 300) {
-		                            return 'Visits'
-		                        } else if (d.attributeName >= 400 && d.attributeName < 500) {
-		                            return 'Condition'
-		                        } else if (d.attributeName >= 500 && d.attributeName < 600) {
-		                            return 'Death'
-		                        } else if (d.attributeName >= 600 && d.attributeName < 700) {
-		                            return 'Procedure'
-		                        } else if (d.attributeName >= 700 && d.attributeName < 800) {
-		                            return 'Drug'
-		                        } else if (d.attributeName >= 900 && d.attributeName < 1000) {
-		                            return 'Drug Era'
-		                        } else if (d.attributeName >= 1000 && d.attributeName < 1100) {
-		                            return 'Condition Era'
-		                        } else if (d.attributeName >= 1100 && d.attributeName < 1200) {
-		                            return 'Location'
-		                        } else if (d.attributeName >= 1200 && d.attributeName < 1300) {
-		                            return 'Care Site'
-		                        } else if (d.attributeName >= 1700 && d.attributeName < 1800) {
-		                            return 'Cohort'
-		                        } else if (d.attributeName >= 1800 && d.attributeName < 1900) {
-		                            return 'Cohort Specific'
-		                        } else if (d.attributeName >= 1300 && d.attributeName < 1400) {
-		                            return 'Measurement'
-		                        } else {
-		                            return 'Other'
-		                        } 
-						  	}
-				         }
-				        ]};
-		
+			Facets: [{
+				'caption': 'Error Msg',
+				'binding': d => {
+					if (d.attributeName < 10) {
+						return 'Person'
+					} else if ((d.attributeName >= 100 && d.attributeName < 200) || (d.attributeName >= 800 && d.attributeName < 900)) {
+						return 'Observation'
+					} else if (d.attributeName >= 200 && d.attributeName < 300) {
+						return 'Visits'
+					} else if (d.attributeName >= 400 && d.attributeName < 500) {
+						return 'Condition'
+					} else if (d.attributeName >= 500 && d.attributeName < 600) {
+						return 'Death'
+					} else if (d.attributeName >= 600 && d.attributeName < 700) {
+						return 'Procedure'
+					} else if (d.attributeName >= 700 && d.attributeName < 800) {
+						return 'Drug'
+					} else if (d.attributeName >= 900 && d.attributeName < 1000) {
+						return 'Drug Era'
+					} else if (d.attributeName >= 1000 && d.attributeName < 1100) {
+						return 'Condition Era'
+					} else if (d.attributeName >= 1100 && d.attributeName < 1200) {
+						return 'Location'
+					} else if (d.attributeName >= 1200 && d.attributeName < 1300) {
+						return 'Care Site'
+					} else if (d.attributeName >= 1700 && d.attributeName < 1800) {
+						return 'Cohort'
+					} else if (d.attributeName >= 1800 && d.attributeName < 1900) {
+						return 'Cohort Specific'
+					} else if (d.attributeName >= 1300 && d.attributeName < 1400) {
+						return 'Measurement'
+					} else {
+						return 'Other'
+					}
+				}
+			}]
+		};
+
 		self.heelDataColumns = [{
 			title: 'Message Type',
 			data: 'attributeName'
-        }, {
+		}, {
 			title: 'Message',
 			data: 'attributeValue'
-        }];
+		}];
 
-		self.dataCompleteOptions =  {
-				Facets: [
-				         {'caption': 'Filter',
-						  'binding': d => { 
-							  return ''
-						  	}
-				         }
-				        ]};
-		
+		self.dataCompleteOptions = {
+			Facets: [{
+				'caption': 'Filter',
+				'binding': d => {
+					return ''
+				}
+			}]
+		};
+
 		self.dataCompletColumns = [{
 			title: 'Age',
 			data: 'covariance'
-        }, {
+		}, {
 			title: 'Gender (%)',
 			data: 'genderP'
-        }, {
+		}, {
 			title: 'Race (%)',
 			data: 'raceP'
-        }, {
+		}, {
 			title: 'Ethnicity (%)',
 			data: 'ethP'
-        }];
-		
-		self.reportTriggerRunSuscription = self.model.reportTriggerRun.subscribe(function (newValue) {
-        	if (newValue) {
-        		self.runReport();
-        	}
-        });
+		}];
 
-		self.model.reportCohortDefinitionId.subscribe(function(d) {
-			if (self.showSelectionArea) {
-				self.cohortCaption(pageModel.cohortDefinitions().filter(function(value) {return value.id == d;})[0].name);
-				$('#cohortDefinitionChooser').modal('hide');				
+		self.reportTriggerRunSuscription = self.model.reportTriggerRun.subscribe(function (newValue) {
+			if (newValue) {
+				self.runReport();
 			}
 		});
-		
+
+		self.model.reportCohortDefinitionId.subscribe(function (d) {
+			if (self.showSelectionArea) {
+				self.cohortCaption(pageModel.cohortDefinitions()
+					.filter(function (value) {
+						return value.id == d;
+					})[0].name);
+				$('#cohortDefinitionChooser')
+					.modal('hide');
+			}
+		});
+
 		self.formatPercent = d3.format('.2%');
 		self.formatFixed = d3.format('.2f');
 		self.formatComma = d3.format(',');
@@ -98,7 +103,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 		self.boxplotHeight = 125;
 
 		self.showBrowser = function () {
-			$('#cohortDefinitionChooser').modal('show');
+			$('#cohortDefinitionChooser')
+				.modal('show');
 		};
 
 		self.donutWidth = 500;
@@ -114,7 +120,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 			switch (self.model.reportReportName()) {
 			case 'Template':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -123,7 +129,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break;
 			case 'Death':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/death?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/death?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -160,9 +166,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 								var item = {};
 								var container = this;
-								d3.keys(container).forEach(function (p) {
-									item[p] = container[p][i];
-								});
+								d3.keys(container)
+									.forEach(function (p) {
+										item[p] = container[p][i];
+									});
 								return item;
 							}, trellisData);
 
@@ -209,9 +216,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 							var prevalenceByMonth = new atlascharts.line();
 							prevalenceByMonth.render(byMonthSeries, "#deathPrevalenceByMonth", 1000, 300, {
-								xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-									return d.xValue;
-								})),
+								xScale: d3.scaleTime()
+									.domain(d3.extent(byMonthSeries[0].values, function (d) {
+										return d.xValue;
+									})),
 								xFormat: d3.timeFormat("%m/%Y"),
 								tickFormat: d3.timeFormat("%Y"),
 								xLabel: "Date",
@@ -261,7 +269,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				// not yet implemented
 			case 'Measurement':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/measurement?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/measurement?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -276,7 +284,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 				$.ajax({
 					type: "GET",
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/procedure?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/procedure?refresh=true',
 					contentType: "application/json; charset=utf-8",
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
@@ -297,50 +305,51 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								};
 							}, normalizedData);
 
-							datatable = $('#procedure_table').DataTable({
-								order: [5, 'desc'],
-								dom: 'T<"clear">lfrtip',
-								data: table_data,
-                                "createdRow": function( row, data, dataIndex ) {
-                                      $(row).addClass( 'procedure_table_selector' );
-                                  },                                
-								columns: [
-									{
-										data: 'concept_id'
-                                },
-									{
-										data: 'level_4'
-                                },
-									{
-										data: 'level_3',
-										visible: false
-                                },
-									{
-										data: 'level_2'
-                                },
-									{
-										data: 'procedure_name'
-                                },
-									{
-										data: 'num_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'percent_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'records_per_person',
-										className: 'numeric'
-                                }
-                            ],
-								pageLength: 5,
-								lengthChange: false,
-								deferRender: true,
-								destroy: true
-							});
+							datatable = $('#procedure_table')
+								.DataTable({
+									order: [5, 'desc'],
+									dom: 'T<"clear">lfrtip',
+									data: table_data,
+									"createdRow": function (row, data, dataIndex) {
+										$(row)
+											.addClass('procedure_table_selector');
+									},
+									columns: [{
+											data: 'concept_id'
+										},
+										{
+											data: 'level_4'
+										},
+										{
+											data: 'level_3',
+											visible: false
+										},
+										{
+											data: 'level_2'
+										},
+										{
+											data: 'procedure_name'
+										},
+										{
+											data: 'num_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'percent_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'records_per_person',
+											className: 'numeric'
+										}
+									],
+									pageLength: 5,
+									lengthChange: false,
+									deferRender: true,
+									destroy: true
+								});
 
-                            /*
+							/*
 							$(document).on('click', '.dataTable tbody tr', function () {
 								var data = $('.dataTable').DataTable().row(this).data();
 								if (data) {
@@ -378,12 +387,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									var title = '',
 										steps = node.path.split('||');
 									for (var i = 0; i < steps.length - 1; i++) {
-										title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+										title += ' <div class="pathstep">' + Array(i + 1)
+											.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 									}
 									return title;
 								}
 							});
-							$('[data-toggle="popover"]').popover();
+							$('[data-toggle="popover"]')
+								.popover();
 						}
 					}
 				});
@@ -396,7 +407,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 				$.ajax({
 					type: "GET",
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drug?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drug?refresh=true',
 					contentType: "application/json; charset=utf-8",
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
@@ -420,61 +431,62 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								};
 							}, data);
 
-							datatable = $('#drug_table').DataTable({
-								order: [6, 'desc'],
-								dom: 'T<"clear">lfrtip',
-								data: table_data,
-                                "createdRow": function( row, data, dataIndex ) {
-                                      $(row).addClass( 'drug_table_selector' );
-                                  },
-								columns: [
-									{
-										data: 'concept_id'
-                                },
-									{
-										data: 'atc1'
-                                },
-									{
-										data: 'atc3',
-										visible: false
-                                },
-									{
-										data: 'atc5'
-                                },
-									{
-										data: 'ingredient',
-										visible: false
-                                },
-									{
-										data: 'rxnorm'
-                                },
-									{
-										data: 'num_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'percent_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'records_per_person',
-										className: 'numeric'
-                                }
-                            ],
-								pageLength: 5,
-								lengthChange: false,
-								deferRender: true,
-								destroy: true
-							});
+							datatable = $('#drug_table')
+								.DataTable({
+									order: [6, 'desc'],
+									dom: 'T<"clear">lfrtip',
+									data: table_data,
+									"createdRow": function (row, data, dataIndex) {
+										$(row)
+											.addClass('drug_table_selector');
+									},
+									columns: [{
+											data: 'concept_id'
+										},
+										{
+											data: 'atc1'
+										},
+										{
+											data: 'atc3',
+											visible: false
+										},
+										{
+											data: 'atc5'
+										},
+										{
+											data: 'ingredient',
+											visible: false
+										},
+										{
+											data: 'rxnorm'
+										},
+										{
+											data: 'num_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'percent_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'records_per_person',
+											className: 'numeric'
+										}
+									],
+									pageLength: 5,
+									lengthChange: false,
+									deferRender: true,
+									destroy: true
+								});
 
-/*
-							$(document).on('click', '.dataTable tbody tr', function () {
-								var data = $('.dataTable').DataTable().row(this).data();
-								if (data) {
-									self.drugExposureDrilldown(data.concept_id, data.rxnorm);
-								}
-							});
-*/
+							/*
+														$(document).on('click', '.dataTable tbody tr', function () {
+															var data = $('.dataTable').DataTable().row(this).data();
+															if (data) {
+																self.drugExposureDrilldown(data.concept_id, data.rxnorm);
+															}
+														});
+							*/
 							var tree = self.buildHierarchyFromJSON(data, threshold);
 							var treemap = new atlascharts.treemap();
 							treemap.render(tree, '#treemap_container', width, height, {
@@ -504,12 +516,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									var title = '',
 										steps = node.path.split('||');
 									for (var i = 0; i < steps.length - 1; i++) {
-										title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+										title += ' <div class="pathstep">' + Array(i + 1)
+											.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 									}
 									return title;
 								}
 							});
-							$('[data-toggle="popover"]').popover();
+							$('[data-toggle="popover"]')
+								.popover();
 						}
 					}
 				});
@@ -521,7 +535,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				threshold = minimum_area / (width * height);
 
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drugera?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drugera?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -543,50 +557,51 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								};
 							}, data);
 
-							datatable = $('#drugera_table').DataTable({
-								order: [5, 'desc'],
-								dom: 'T<"clear">lfrtip',
-								data: table_data,
-                                "createdRow": function( row, data, dataIndex ) {
-                                      $(row).addClass( 'drugera_table_selector' );
-                                  },                                
-								columns: [
-									{
-										data: 'concept_id'
-                                },
-									{
-										data: 'atc1'
-                                },
-									{
-										data: 'atc3',
-										visible: false
-                                },
-									{
-										data: 'atc5'
-                                },
-									{
-										data: 'ingredient'
-                                },
-									{
-										data: 'num_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'percent_persons',
-										className: 'numeric'
-                                },
-									{
-										data: 'length_of_era',
-										className: 'numeric'
-                                }
-                            ],
-								pageLength: 5,
-								lengthChange: false,
-								deferRender: true,
-								destroy: true
-							});
+							datatable = $('#drugera_table')
+								.DataTable({
+									order: [5, 'desc'],
+									dom: 'T<"clear">lfrtip',
+									data: table_data,
+									"createdRow": function (row, data, dataIndex) {
+										$(row)
+											.addClass('drugera_table_selector');
+									},
+									columns: [{
+											data: 'concept_id'
+										},
+										{
+											data: 'atc1'
+										},
+										{
+											data: 'atc3',
+											visible: false
+										},
+										{
+											data: 'atc5'
+										},
+										{
+											data: 'ingredient'
+										},
+										{
+											data: 'num_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'percent_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'length_of_era',
+											className: 'numeric'
+										}
+									],
+									pageLength: 5,
+									lengthChange: false,
+									deferRender: true,
+									destroy: true
+								});
 
-                            /*
+							/*
 							$(document).on('click', '.dataTable tbody tr', function () {
 								var data = $('.dataTable').DataTable().row(this).data();
 								if (data) {
@@ -624,12 +639,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									var title = '',
 										steps = node.path.split('||');
 									for (var i = 0; i < steps.length - 1; i++) {
-										title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+										title += ' <div class="pathstep">' + Array(i + 1)
+											.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 									}
 									return title;
 								}
 							});
-							$('[data-toggle="popover"]').popover();
+							$('[data-toggle="popover"]')
+								.popover();
 						}
 					}
 				});
@@ -641,7 +658,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				threshold = minimum_area / (width * height);
 
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/condition?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/condition?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -664,54 +681,55 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								};
 							}, data);
 
-							datatable = $('#condition_table').DataTable({
-								order: [6, 'desc'],
-								dom: 'T<"clear">lfrtip',
-								data: table_data,
-                                "createdRow": function( row, data, dataIndex ) {
-                                      $(row).addClass( 'condition_table_selector' );
-                                  },                                
-								columns: [
-									{
-										data: 'concept_id'
-                            },
-									{
-										data: 'soc'
-                            },
-									{
-										data: 'hlgt',
-										visible: false
-                            },
-									{
-										data: 'hlt'
-                            },
-									{
-										data: 'pt',
-										visible: false
-                            },
-									{
-										data: 'snomed'
-                            },
-									{
-										data: 'num_persons',
-										className: 'numeric'
-                            },
-									{
-										data: 'percent_persons',
-										className: 'numeric'
-                            },
-									{
-										data: 'records_per_person',
-										className: 'numeric'
-                            }
-                        ],
-								pageLength: 5,
-								lengthChange: false,
-								deferRender: true,
-								destroy: true
-							});
+							datatable = $('#condition_table')
+								.DataTable({
+									order: [6, 'desc'],
+									dom: 'T<"clear">lfrtip',
+									data: table_data,
+									"createdRow": function (row, data, dataIndex) {
+										$(row)
+											.addClass('condition_table_selector');
+									},
+									columns: [{
+											data: 'concept_id'
+										},
+										{
+											data: 'soc'
+										},
+										{
+											data: 'hlgt',
+											visible: false
+										},
+										{
+											data: 'hlt'
+										},
+										{
+											data: 'pt',
+											visible: false
+										},
+										{
+											data: 'snomed'
+										},
+										{
+											data: 'num_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'percent_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'records_per_person',
+											className: 'numeric'
+										}
+									],
+									pageLength: 5,
+									lengthChange: false,
+									deferRender: true,
+									destroy: true
+								});
 
-                            /*
+							/*
 							$(document).on('click', '.dataTable tbody tr', function () {
 								var data = $('.dataTable').DataTable().row(this.rowIndex).data();
 								if (data) {
@@ -719,7 +737,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								}
 							});
                             */
-                            
+
 							tree = self.buildHierarchyFromJSON(data, threshold);
 							var treemap = new atlascharts.treemap();
 							treemap.render(tree, '#treemap_container', width, height, {
@@ -749,19 +767,21 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									var title = '',
 										steps = node.path.split('||');
 									for (var i = 0; i < steps.length - 1; i++) {
-										title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+										title += ' <div class="pathstep">' + Array(i + 1)
+											.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 									}
 									return title;
 								}
 							});
-							$('[data-toggle="popover"]').popover();
+							$('[data-toggle="popover"]')
+								.popover();
 						}
 					}
 				});
 				break;
 			case 'Observation Periods':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/observationperiod?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/observationperiod?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -798,7 +818,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							histData.max = d3.max(ageAtFirstData.countValue);
 							histData.intervals = 120;
 							histData.data = ageAtFirstData;
-							d3.selectAll("#ageatfirstobservation svg").remove();
+							d3.selectAll("#ageatfirstobservation svg")
+								.remove();
 							var ageAtFirstObservationData = self.mapHistogram(histData);
 							var ageAtFirstObservationHistogram = new atlascharts.histogram();
 							ageAtFirstObservationHistogram.render(ageAtFirstObservationData, "#ageatfirstobservation", 230, 115, {
@@ -816,7 +837,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							histData2.min = +data.observationLengthStats[0].minValue;
 							histData2.max = +data.observationLengthStats[0].maxValue;
 							histData2.intervals = Math.round((histData2.max - histData2.min + 1) / histData2.intervalSize) + histData2.intervalSize;
-							d3.selectAll("#observationlength svg").remove();
+							d3.selectAll("#observationlength svg")
+								.remove();
 							if (!histData2.data.empty) {
 								var observationLengthData = self.mapHistogram(histData2);
 								var observationLengthXLabel = 'Days';
@@ -838,11 +860,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						}
 
 						// cumulative observation
-						d3.selectAll("#cumulativeobservation svg").remove();
+						d3.selectAll("#cumulativeobservation svg")
+							.remove();
 						var cumObsData = self.normalizeArray(data.cumulativeObservation);
 						if (!cumObsData.empty) {
 							var cumulativeObservationLine = new atlascharts.line();
-							var cumulativeData = self.normalizeDataframe(cumObsData).xLengthOfObservation
+							var cumulativeData = self.normalizeDataframe(cumObsData)
+								.xLengthOfObservation
 								.map(function (d, i) {
 									var item = {
 										xValue: this.xLengthOfObservation[i],
@@ -873,7 +897,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						// observation period length by gender
 						var obsPeriodByGenderData = self.normalizeArray(data.durationByGender);
 						if (!obsPeriodByGenderData.empty) {
-							d3.selectAll("#opbygender svg").remove();
+							d3.selectAll("#opbygender svg")
+								.remove();
 							var opbygenderboxplot = new atlascharts.boxplot();
 							var opgData = obsPeriodByGenderData.category
 								.map(function (d, i) {
@@ -917,7 +942,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						}
 
 						// observation period length by age
-						d3.selectAll("#opbyage svg").remove();
+						d3.selectAll("#opbyage svg")
+							.remove();
 						var obsPeriodByLenByAgeData = self.normalizeArray(data.durationByAgeDecile);
 						if (!obsPeriodByLenByAgeData.empty) {
 							var opbyageboxplot = new atlascharts.BoxPlot();
@@ -971,7 +997,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							histData3.min = +data.personsWithContinuousObservationsByYearStats[0].minValue;
 							histData3.max = +data.personsWithContinuousObservationsByYearStats[0].maxValue;
 							histData3.intervals = Math.round((histData3.max - histData3.min + histData3.intervalSize) / histData3.intervalSize) + histData3.intervalSize;
-							d3.selectAll("#oppeoplebyyear svg").remove();
+							d3.selectAll("#oppeoplebyyear svg")
+								.remove();
 							var observationLengthByYearHistogram = new atlascharts.histogram();
 							observationLengthByYearHistogram.render(self.mapHistogram(histData3), "#oppeoplebyyear", 460, 195, {
 								xFormat: d3.format('d'),
@@ -988,12 +1015,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								yValue: 'countValue',
 								yPercent: 'percentValue'
 							});
-							d3.selectAll("#oppeoplebymonthsingle svg").remove();
+							d3.selectAll("#oppeoplebymonthsingle svg")
+								.remove();
 							var observationByMonthSingle = new atlascharts.line();
 							observationByMonthSingle.render(byMonthSeries, "#oppeoplebymonthsingle", 400, 200, {
-								xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-									return d.xValue;
-								})),
+								xScale: d3.scaleTime()
+									.domain(d3.extent(byMonthSeries[0].values, function (d) {
+										return d.xValue;
+									})),
 								xFormat: d3.timeFormat("%m/%Y"),
 								tickFormat: d3.timeFormat("%Y"),
 								ticks: 10,
@@ -1005,7 +1034,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						// obs period per person
 						var personPeriodData = self.normalizeArray(data.observationPeriodsPerPerson);
 						if (!personPeriodData.empty) {
-							d3.selectAll("#opperperson svg").remove();
+							d3.selectAll("#opperperson svg")
+								.remove();
 							var donut = new atlascharts.donut();
 							donut.render(self.mapConceptData(data.observationPeriodsPerPerson), "#opperperson", 230, 230, {
 								margin: {
@@ -1026,7 +1056,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				var threshold = minimum_area / (width * height);
 
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/conditionera?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/conditionera?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1049,54 +1079,55 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								};
 							}, data);
 
-							datatable = $('#conditionera_table').DataTable({
-								order: [6, 'desc'],
-								dom: 'T<"clear">lfrtip',
-								data: table_data,
-                                "createdRow": function( row, data, dataIndex ) {
-                                      $(row).addClass( 'conditionera_table_selector' );
-                                  },                                
-								columns: [
-									{
-										data: 'concept_id'
-              },
-									{
-										data: 'soc'
-              },
-									{
-										data: 'hlgt',
-										visible: false
-              },
-									{
-										data: 'hlt'
-              },
-									{
-										data: 'pt',
-										visible: false
-              },
-									{
-										data: 'snomed'
-              },
-									{
-										data: 'num_persons',
-										className: 'numeric'
-              },
-									{
-										data: 'percent_persons',
-										className: 'numeric'
-              },
-									{
-										data: 'length_of_era',
-										className: 'numeric'
-              }
-            ],
-								pageLength: 5,
-								lengthChange: false,
-								deferRender: true,
-								destroy: true
-							});
+							datatable = $('#conditionera_table')
+								.DataTable({
+									order: [6, 'desc'],
+									dom: 'T<"clear">lfrtip',
+									data: table_data,
+									"createdRow": function (row, data, dataIndex) {
+										$(row)
+											.addClass('conditionera_table_selector');
+									},
+									columns: [{
+											data: 'concept_id'
+										},
+										{
+											data: 'soc'
+										},
+										{
+											data: 'hlgt',
+											visible: false
+										},
+										{
+											data: 'hlt'
+										},
+										{
+											data: 'pt',
+											visible: false
+										},
+										{
+											data: 'snomed'
+										},
+										{
+											data: 'num_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'percent_persons',
+											className: 'numeric'
+										},
+										{
+											data: 'length_of_era',
+											className: 'numeric'
+										}
+									],
+									pageLength: 5,
+									lengthChange: false,
+									deferRender: true,
+									destroy: true
+								});
 
-                            /*
+							/*
 							$(document).on('click', '.dataTable tbody tr', function () {
 								var data = $('.dataTable').DataTable().row(this).data();
 								if (data) {
@@ -1104,7 +1135,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								}
 							});
                             */
-                            
+
 							var tree = self.eraBuildHierarchyFromJSON(data, threshold);
 							var treemap = new atlascharts.treemap();
 							treemap.render(tree, '#treemap_container', width, height, {
@@ -1134,19 +1165,21 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									var title = '',
 										steps = node.path.split('||');
 									for (var i = 0; i < steps.length - 1; i++) {
-										title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+										title += ' <div class="pathstep">' + Array(i + 1)
+											.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 									}
 									return title;
 								}
 							});
-							$('[data-toggle="popover"]').popover();
+							$('[data-toggle="popover"]')
+								.popover();
 						}
 					}
 				});
 				break;
 			case 'Drugs by Index':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1180,55 +1213,60 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									};
 								}, drugEraPrevalenceData);
 
-								$(document).on('click', '.treemap_table tbody tr', function () {
-									var datatable = self.datatables[$(this).parents('.treemap_table').attr('id')];
-									var data = datatable.data()[datatable.row(this)[0]];
-									if (data) {
-										var did = data.concept_id;
-										var concept_name = data.name;
-										self.drilldown(did, concept_name, $(this).parents('.treemap_table').attr('type'));
-									}
-								});
+								$(document)
+									.on('click', '.treemap_table tbody tr', function () {
+										var datatable = self.datatables[$(this)
+											.parents('.treemap_table')
+											.attr('id')];
+										var data = datatable.data()[datatable.row(this)[0]];
+										if (data) {
+											var did = data.concept_id;
+											var concept_name = data.name;
+											self.drilldown(did, concept_name, $(this)
+												.parents('.treemap_table')
+												.attr('type'));
+										}
+									});
 
-								datatable = $('#drugera_table').DataTable({
-									order: [5, 'desc'],
-									dom: 'T<"clear">lfrtip',
-									data: table_data,
-									columns: [
-										{
-											data: 'concept_id'
-                                },
-										{
-											data: 'atc1'
-                                },
-										{
-											data: 'atc3',
-											visible: false
-                                },
-										{
-											data: 'atc5'
-                                },
-										{
-											data: 'ingredient'
-                                },
-										{
-											data: 'num_persons',
-											className: 'numeric'
-                                },
-										{
-											data: 'percent_persons',
-											className: 'numeric'
-                                },
-										{
-											data: 'relative_risk',
-											className: 'numeric'
-                                }
-                            ],
-									pageLength: 5,
-									lengthChange: false,
-									deferRender: true,
-									destroy: true
-								});
+								datatable = $('#drugera_table')
+									.DataTable({
+										order: [5, 'desc'],
+										dom: 'T<"clear">lfrtip',
+										data: table_data,
+										columns: [{
+												data: 'concept_id'
+											},
+											{
+												data: 'atc1'
+											},
+											{
+												data: 'atc3',
+												visible: false
+											},
+											{
+												data: 'atc5'
+											},
+											{
+												data: 'ingredient'
+											},
+											{
+												data: 'num_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'percent_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'relative_risk',
+												className: 'numeric'
+											}
+										],
+										pageLength: 5,
+										lengthChange: false,
+										deferRender: true,
+										destroy: true
+									});
 								self.datatables['drugera_table'] = datatable;
 
 								tree = self.buildHierarchyFromJSON(drugEraPrevalence, threshold);
@@ -1266,13 +1304,15 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 										var title = '',
 											steps = node.path.split('||');
 										for (var i = 0; i < steps.length - 1; i++) {
-											title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+											title += ' <div class="pathstep">' + Array(i + 1)
+												.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 										}
 										return title;
 									}
 								});
 
-								$('[data-toggle="popover"]').popover();
+								$('[data-toggle="popover"]')
+									.popover();
 							}
 						}
 					}
@@ -1280,7 +1320,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break;
 			case 'Conditions by Index':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1315,58 +1355,64 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									};
 								}, conditionOccurrencePrevalence);
 
-								$(document).on('click', '.treemap_table tbody tr', function () {
-									var datatable = self.datatables[$(this).parents('.treemap_table').attr('id')];
-									var data = datatable.data()[datatable.row(this)[0]];
-									if (data) {
-										var did = data.concept_id;
-										var concept_name = data.name;
-										self.drilldown(did, concept_name, $(this).parents('.treemap_table').attr('type'));
-									}
-								});
+								$(document)
+									.on('click', '.treemap_table tbody tr', function () {
+										var datatable = self.datatables[$(this)
+											.parents('.treemap_table')
+											.attr('id')];
+										var data = datatable.data()[datatable.row(this)[0]];
+										if (data) {
+											var did = data.concept_id;
+											var concept_name = data.name;
+											self.drilldown(did, concept_name, $(this)
+												.parents('.treemap_table')
+												.attr('type'));
+										}
+									});
 
-								datatable = $('#condition_table').DataTable({
-									order: [6, 'desc'],
-									dom: 'T<"clear">lfrtip',
-									data: table_data,
-									columns: [{
-											data: 'concept_id'
-								},
-										{
-											data: 'soc'
-                },
-										{
-											data: 'hlgt',
-											visible: false
-								},
-										{
-											data: 'hlt'
-                },
-										{
-											data: 'pt',
-											visible: false
-                },
-										{
-											data: 'snomed'
-                },
-										{
-											data: 'num_persons',
-											className: 'numeric'
-                },
-										{
-											data: 'percent_persons',
-											className: 'numeric'
-                },
-										{
-											data: 'relative_risk',
-											className: 'numeric'
-                }
-                ],
-									pageLength: 5,
-									lengthChange: false,
-									deferRender: true,
-									destroy: true
-								});
+								datatable = $('#condition_table')
+									.DataTable({
+										order: [6, 'desc'],
+										dom: 'T<"clear">lfrtip',
+										data: table_data,
+										columns: [{
+												data: 'concept_id'
+											},
+											{
+												data: 'soc'
+											},
+											{
+												data: 'hlgt',
+												visible: false
+											},
+											{
+												data: 'hlt'
+											},
+											{
+												data: 'pt',
+												visible: false
+											},
+											{
+												data: 'snomed'
+											},
+											{
+												data: 'num_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'percent_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'relative_risk',
+												className: 'numeric'
+											}
+										],
+										pageLength: 5,
+										lengthChange: false,
+										deferRender: true,
+										destroy: true
+									});
 								self.datatables['condition_table'] = datatable;
 
 								tree = self.buildHierarchyFromJSON(conditionOccurrencePrevalence, threshold);
@@ -1404,13 +1450,15 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 										var title = '',
 											steps = node.path.split('||');
 										for (var i = 0; i < steps.length - 1; i++) {
-											title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+											title += ' <div class="pathstep">' + Array(i + 1)
+												.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 										}
 										return title;
 									}
 								});
 
-								$('[data-toggle="popover"]').popover();
+								$('[data-toggle="popover"]')
+									.popover();
 							}
 						}
 					}
@@ -1418,7 +1466,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break;
 			case 'Procedures by Index':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecifictreemap?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1451,55 +1499,60 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									};
 								}, procedureOccurrencePrevalence);
 
-								$(document).on('click', '.treemap_table tbody tr', function () {
-									var datatable = self.datatables[$(this).parents('.treemap_table').attr('id')];
-									var data = datatable.data()[datatable.row(this)[0]];
-									if (data) {
-										var did = data.concept_id;
-										var concept_name = data.name;
-										self.drilldown(did, concept_name, $(this).parents('.treemap_table').attr('type'));
-									}
-								});
+								$(document)
+									.on('click', '.treemap_table tbody tr', function () {
+										var datatable = self.datatables[$(this)
+											.parents('.treemap_table')
+											.attr('id')];
+										var data = datatable.data()[datatable.row(this)[0]];
+										if (data) {
+											var did = data.concept_id;
+											var concept_name = data.name;
+											self.drilldown(did, concept_name, $(this)
+												.parents('.treemap_table')
+												.attr('type'));
+										}
+									});
 
-								datatable = $('#procedure_table').DataTable({
-									order: [6, 'desc'],
-									dom: 'T<"clear">lfrtip',
-									data: table_data,
-									columns: [
-										{
-											data: 'concept_id'
-									},
-										{
-											data: 'level_4'
-									},
-										{
-											data: 'level_3',
-											visible: false
-									},
-										{
-											data: 'level_2'
-									},
-										{
-											data: 'procedure_name'
-									},
-										{
-											data: 'num_persons',
-											className: 'numeric'
-									},
-										{
-											data: 'percent_persons',
-											className: 'numeric'
-									},
-										{
-											data: 'relative_risk',
-											className: 'numeric'
-									}
-							],
-									pageLength: 5,
-									lengthChange: false,
-									deferRender: true,
-									destroy: true
-								});
+								datatable = $('#procedure_table')
+									.DataTable({
+										order: [6, 'desc'],
+										dom: 'T<"clear">lfrtip',
+										data: table_data,
+										columns: [{
+												data: 'concept_id'
+											},
+											{
+												data: 'level_4'
+											},
+											{
+												data: 'level_3',
+												visible: false
+											},
+											{
+												data: 'level_2'
+											},
+											{
+												data: 'procedure_name'
+											},
+											{
+												data: 'num_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'percent_persons',
+												className: 'numeric'
+											},
+											{
+												data: 'relative_risk',
+												className: 'numeric'
+											}
+										],
+										pageLength: 5,
+										lengthChange: false,
+										deferRender: true,
+										destroy: true
+									});
 								self.datatables['procedure_table'] = datatable;
 
 								tree = self.buildHierarchyFromJSON(procedureOccurrencePrevalence, threshold);
@@ -1537,13 +1590,15 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 										var title = '',
 											steps = node.path.split('||');
 										for (var i = 0; i < steps.length - 1; i++) {
-											title += ' <div class="pathstep">' + Array(i + 1).join('&nbsp;&nbsp') + steps[i] + ' </div>';
+											title += ' <div class="pathstep">' + Array(i + 1)
+												.join('&nbsp;&nbsp') + steps[i] + ' </div>';
 										}
 										return title;
 									}
 								});
 
-								$('[data-toggle="popover"]').popover();
+								$('[data-toggle="popover"]')
+									.popover();
 							}
 						}
 					}
@@ -1551,7 +1606,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break;
 			case 'Cohort Specific':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1559,7 +1614,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						// Persons By Duration From Start To End
 						var result = self.normalizeArray(data.personsByDurationFromStartToEnd, false);
 						if (!result.empty) {
-							var personsByDurationData = self.normalizeDataframe(result).duration
+							var personsByDurationData = self.normalizeDataframe(result)
+								.duration
 								.map(function (d, i) {
 									var item = {
 										xValue: this.duration[i],
@@ -1590,9 +1646,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 							var prevalenceByMonth = new atlascharts.line();
 							prevalenceByMonth.render(byMonthSeries, "#prevalenceByMonth", 400, 200, {
-								xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-									return d.xValue;
-								})),
+								xScale: d3.scaleTime()
+									.domain(d3.extent(byMonthSeries[0].values, function (d) {
+										return d.xValue;
+									})),
 								xFormat: d3.timeFormat("%m/%Y"),
 								tickFormat: d3.timeFormat("%Y"),
 								xLabel: "Date",
@@ -1682,9 +1739,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							});
 							var observationByMonthSingle = new atlascharts.line();
 							observationByMonthSingle.render(personsInCohortFromCohortStartToEndSeries, "#personinCohortFromStartToEnd", 460, 250, {
-								xScale: d3.scaleTime().domain(d3.extent(personsInCohortFromCohortStartToEndSeries[0].values, function (d) {
-									return d.xValue;
-								})),
+								xScale: d3.scaleTime()
+									.domain(d3.extent(personsInCohortFromCohortStartToEndSeries[0].values, function (d) {
+										return d.xValue;
+									})),
 								xLabel: "30 Day Increments",
 								yLabel: "People"
 							});
@@ -1722,9 +1780,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 								var item = {};
 								var container = this;
-								d3.keys(container).forEach(function (p) {
-									item[p] = container[p][i];
-								});
+								d3.keys(container)
+									.forEach(function (p) {
+										item[p] = container[p][i];
+									});
 								return item;
 							}, trellisData);
 
@@ -1766,7 +1825,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break;
 			case 'Person':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/person?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/person?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1831,29 +1890,29 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				break; // person report
 			case 'Heracles Heel':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/heraclesheel?refresh=true',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/heraclesheel?refresh=true',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
-						
-						self.reference(data);						
+
+						self.reference(data);
 					}
 				});
 				break; // Heracles Heel report
 			case 'Data Completeness':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/datacompleteness',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/datacompleteness',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
 
-						self.dataCompleteReference(data);						
+						self.dataCompleteReference(data);
 					}
 				});
 				break; // Data Completeness report
 			case 'Entropy':
 				$.ajax({
-					url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/entropy',
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/entropy',
 					success: function (data) {
 						self.model.currentReport(self.model.reportReportName());
 						self.model.loadingReport(false);
@@ -1869,9 +1928,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 							var prevalenceByDate = new atlascharts.line();
 							prevalenceByDate.render(byDateSeries, "#entropyByDate", 400, 200, {
-								xScale: d3.scaleTime().domain(d3.extent(byDateSeries[0].values, function (d) {
-									return d.xValue;
-								})),
+								xScale: d3.scaleTime()
+									.domain(d3.extent(byDateSeries[0].values, function (d) {
+										return d.xValue;
+									})),
 								xFormat: d3.timeFormat("%Y/%m/%d"),
 								tickFormat: d3.timeFormat("%Y"),
 								xLabel: "Date",
@@ -1891,14 +1951,16 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			$.ajax({
 				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/condition/' + concept_id + "?refresh=true",
+				url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/condition/' + concept_id + "?refresh=true",
 				success: function (data) {
 					self.model.loadingReportDrilldown(false);
 					self.model.activeReportDrilldown(true);
-					$('#conditionDrilldown').html(concept_name + ' Drilldown Report');
+					$('#conditionDrilldown')
+						.html(concept_name + ' Drilldown Report');
 
 					// age at first diagnosis visualization
-					d3.selectAll("#ageAtFirstDiagnosis svg").remove();
+					d3.selectAll("#ageAtFirstDiagnosis svg")
+						.remove();
 					var boxplot = new atlascharts.boxplot();
 					var bpseries = [];
 					var bpdata = self.normalizeArray(data.ageAtFirstDiagnosis, true);
@@ -1922,7 +1984,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 					}
 
 					// prevalence by month
-					d3.selectAll("#conditionPrevalenceByMonth svg").remove();
+					d3.selectAll("#conditionPrevalenceByMonth svg")
+						.remove();
 					var byMonthData = self.normalizeArray(data.prevalenceByMonth, true);
 					if (!byMonthData.empty) {
 						var byMonthSeries = self.mapMonthYearDataToSeries(byMonthData, {
@@ -1934,9 +1997,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						var prevalenceByMonth = new atlascharts.line();
 						prevalenceByMonth.render(byMonthSeries, "#conditionPrevalenceByMonth", 230, 115, {
-							xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-								return d.xValue;
-							})),
+							xScale: d3.scaleTime()
+								.domain(d3.extent(byMonthSeries[0].values, function (d) {
+									return d.xValue;
+								})),
 							xFormat: d3.timeFormat("%m/%Y"),
 							tickFormat: d3.timeFormat("%Y"),
 							xLabel: "Date",
@@ -1946,7 +2010,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 					// condition type visualization
 					var conditionType = self.mapConceptData(data.conditionsByType);
-					d3.selectAll("#conditionsByType svg").remove();
+					d3.selectAll("#conditionsByType svg")
+						.remove();
 					if (conditionType) {
 						var donut = new atlascharts.donut();
 						donut.render(conditionType, "#conditionsByType", 260, 130, {
@@ -1963,7 +2028,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 					}
 
 					// render trellis
-					d3.selectAll("#trellisLinePlot svg").remove();
+					d3.selectAll("#trellisLinePlot svg")
+						.remove();
 					var trellisData = self.normalizeArray(data.prevalenceByGenderAgeYear, true);
 
 					if (!trellisData.empty) {
@@ -1995,9 +2061,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 							var item = {};
 							var container = this;
-							d3.keys(container).forEach(function (p) {
-								item[p] = container[p][i];
-							});
+							d3.keys(container)
+								.forEach(function (p) {
+									item[p] = container[p][i];
+								});
 							return item;
 						}, trellisData);
 
@@ -2043,9 +2110,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			$.ajax({
 				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drug/' + concept_id + '?refresh=true',
+				url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drug/' + concept_id + '?refresh=true',
 				success: function (data) {
-					$('#drugExposureDrilldown').text(concept_name);
+					$('#drugExposureDrilldown')
+						.text(concept_name);
 					self.model.loadingReportDrilldown(false);
 					self.model.activeReportDrilldown(true);
 
@@ -2078,12 +2146,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							yPercent: 'yPrevalence1000Pp'
 						});
 
-						d3.selectAll("#drugPrevalenceByMonth svg").remove();
+						d3.selectAll("#drugPrevalenceByMonth svg")
+							.remove();
 						var prevalenceByMonth = new atlascharts.line();
 						prevalenceByMonth.render(byMonthSeries, "#drugPrevalenceByMonth", 900, 250, {
-							xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-								return d.xValue;
-							})),
+							xScale: d3.scaleTime()
+								.domain(d3.extent(byMonthSeries[0].values, function (d) {
+									return d.xValue;
+								})),
 							xFormat: d3.timeFormat("%m/%Y"),
 							tickFormat: d3.timeFormat("%Y"),
 							xLabel: "Date",
@@ -2124,9 +2194,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 							var item = {};
 							var container = this;
-							d3.keys(container).forEach(function (p) {
-								item[p] = container[p][i];
-							});
+							d3.keys(container)
+								.forEach(function (p) {
+									item[p] = container[p][i];
+								});
 							return item;
 						}, trellisData);
 
@@ -2171,12 +2242,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			$.ajax({
 				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/conditionera/' + concept_id + '?refresh=true',
+				url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/conditionera/' + concept_id + '?refresh=true',
 				success: function (data) {
 					self.model.loadingReportDrilldown(false);
 					self.model.activeReportDrilldown(true);
 
-					$('#conditionEraDrilldown').html(concept_name + ' Drilldown Report');
+					$('#conditionEraDrilldown')
+						.html(concept_name + ' Drilldown Report');
 
 					self.boxplotHelper(data.ageAtFirstDiagnosis, '#conditioneras_age_at_first_diagnosis', 500, 300, 'Gender', 'Age at First Diagnosis');
 					self.boxplotHelper(data.lengthOfEra, '#conditioneras_length_of_era', 500, 300, '', 'Days');
@@ -2190,12 +2262,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							yPercent: 'yPrevalence1000Pp'
 						});
 
-						d3.selectAll("#conditioneraPrevalenceByMonth svg").remove();
+						d3.selectAll("#conditioneraPrevalenceByMonth svg")
+							.remove();
 						var prevalenceByMonth = new atlascharts.line();
 						prevalenceByMonth.render(byMonthSeries, "#conditioneraPrevalenceByMonth", 230, 115, {
-							xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-								return d.xValue;
-							})),
+							xScale: d3.scaleTime()
+								.domain(d3.extent(byMonthSeries[0].values, function (d) {
+									return d.xValue;
+								})),
 							xFormat: d3.timeFormat("%m/%Y"),
 							tickFormat: d3.timeFormat("%Y"),
 							xLabel: "Date",
@@ -2235,9 +2309,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 							var item = {};
 							var container = this;
-							d3.keys(container).forEach(function (p) {
-								item[p] = container[p][i];
-							});
+							d3.keys(container)
+								.forEach(function (p) {
+									item[p] = container[p][i];
+								});
 							return item;
 						}, trellisData);
 
@@ -2282,12 +2357,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			$.ajax({
 				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drugera/' + concept_id + '?refresh=true',
+				url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/drugera/' + concept_id + '?refresh=true',
 				success: function (data) {
 					self.model.loadingReportDrilldown(false);
 					self.model.activeReportDrilldown(true);
 
-					$('#drugeraDrilldown').html(concept_name + ' Drilldown Report');
+					$('#drugeraDrilldown')
+						.html(concept_name + ' Drilldown Report');
 
 					// age at first exposure visualization
 					self.boxplotHelper(data.ageAtFirstExposure, '#drugeras_age_at_first_exposure', 500, 200, 'Gender', 'Age at First Exposure');
@@ -2302,12 +2378,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							yPercent: 'yPrevalence1000Pp'
 						});
 
-						d3.selectAll("#drugeraPrevalenceByMonth svg").remove();
+						d3.selectAll("#drugeraPrevalenceByMonth svg")
+							.remove();
 						var prevalenceByMonth = new atlascharts.line();
 						prevalenceByMonth.render(byMonthSeries, "#drugeraPrevalenceByMonth", 400, 200, {
-							xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-								return d.xValue;
-							})),
+							xScale: d3.scaleTime()
+								.domain(d3.extent(byMonthSeries[0].values, function (d) {
+									return d.xValue;
+								})),
 							xFormat: d3.timeFormat("%m/%Y"),
 							tickFormat: d3.timeFormat("%Y"),
 							xLabel: "Date",
@@ -2347,9 +2425,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 							var item = {};
 							var container = this;
-							d3.keys(container).forEach(function (p) {
-								item[p] = container[p][i];
-							});
+							d3.keys(container)
+								.forEach(function (p) {
+									item[p] = container[p][i];
+								});
 							return item;
 						}, trellisData);
 
@@ -2394,11 +2473,12 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			$.ajax({
 				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/procedure/' + concept_id + '?refresh=true',
+				url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/procedure/' + concept_id + '?refresh=true',
 				success: function (data) {
 					self.model.loadingReportDrilldown(false);
 					self.model.activeReportDrilldown(true);
-					$('#procedureDrilldown').text(concept_name + ' Drilldown Report');
+					$('#procedureDrilldown')
+						.text(concept_name + ' Drilldown Report');
 
 					// age at first diagnosis visualization
 					var boxplot = new atlascharts.boxplot();
@@ -2434,9 +2514,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						var prevalenceByMonth = new atlascharts.line();
 						prevalenceByMonth.render(byMonthSeries, "#procedurePrevalenceByMonth", 1000, 300, {
-							xScale: d3.scaleTime().domain(d3.extent(byMonthSeries[0].values, function (d) {
-								return d.xValue;
-							})),
+							xScale: d3.scaleTime()
+								.domain(d3.extent(byMonthSeries[0].values, function (d) {
+									return d.xValue;
+								})),
 							xFormat: d3.timeFormat("%m/%Y"),
 							tickFormat: d3.timeFormat("%Y"),
 							xLabel: "Date",
@@ -2489,9 +2570,10 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						var normalizedSeries = trellisData.trellisName.map(function (d, i) {
 							var item = {};
 							var container = this;
-							d3.keys(container).forEach(function (p) {
-								item[p] = container[p][i];
-							});
+							d3.keys(container)
+								.forEach(function (p) {
+									item[p] = container[p][i];
+								});
 							return item;
 						}, trellisData);
 
@@ -2536,77 +2618,79 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 			self.model.activeReportDrilldown(false);
 
 			$.ajax({
-				type: "GET",
-				url: config.services[0].url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific' + type + "/" + id + '?refresh=true',
-				contentType: "application/json; charset=utf-8"
-			}).done(function (result) {
-				if (result && result.length > 0) {
-					$("#" + type + "DrilldownScatterplot").empty();
-					var normalized = self.dataframeToArray(self.normalizeArray(result));
+					type: "GET",
+					url: self.config.api.url + 'cohortresults/' + self.model.reportSourceKey() + '/' + self.model.reportCohortDefinitionId() + '/cohortspecific' + type + "/" + id + '?refresh=true',
+					contentType: "application/json; charset=utf-8"
+				})
+				.done(function (result) {
+					if (result && result.length > 0) {
+						$("#" + type + "DrilldownScatterplot")
+							.empty();
+						var normalized = self.dataframeToArray(self.normalizeArray(result));
 
-					// nest dataframe data into key->values pair
-					var totalRecordsData = d3.nest()
-						.key(function (d) {
-							return d.recordType;
-						})
-						.entries(normalized)
-						.map(function (d) {
-							return {
-								name: d.key,
-								values: d.values
-							};
+						// nest dataframe data into key->values pair
+						var totalRecordsData = d3.nest()
+							.key(function (d) {
+								return d.recordType;
+							})
+							.entries(normalized)
+							.map(function (d) {
+								return {
+									name: d.key,
+									values: d.values
+								};
+							});
+
+						var scatter = new atlascharts.scatterplot();
+						self.model.activeReportDrilldown(true);
+						$('#' + type + 'DrilldownScatterplotHeading')
+							.html(name);
+
+						scatter.render(totalRecordsData, "#" + type + "DrilldownScatterplot", 460, 150, {
+							yFormat: d3.format('0.2%'),
+							xValue: "duration",
+							yValue: "pctPersons",
+							xLabel: "Duration Relative to Index",
+							yLabel: "% Persons",
+							seriesName: "recordType",
+							showLegend: true,
+							colors: d3.scale.category10(),
+							tooltips: [{
+									label: 'Series',
+									accessor: function (o) {
+										return o.recordType;
+									}
+								},
+								{
+									label: 'Percent Persons',
+									accessor: function (o) {
+										return d3.format('0.2%')(o.pctPersons);
+									}
+								},
+								{
+									label: 'Duration Relative to Index',
+									accessor: function (o) {
+										var years = Math.round(o.duration / 365);
+										var days = o.duration % 365;
+										var result = '';
+										if (years != 0)
+											result += years + 'y ';
+
+										result += days + 'd'
+										return result;
+									}
+								},
+								{
+									label: 'Person Count',
+									accessor: function (o) {
+										return o.countValue;
+									}
+								}
+							]
 						});
-
-					var scatter = new atlascharts.scatterplot();
-					self.model.activeReportDrilldown(true);
-					$('#' + type + 'DrilldownScatterplotHeading').html(name);
-
-					scatter.render(totalRecordsData, "#" + type + "DrilldownScatterplot", 460, 150, {
-						yFormat: d3.format('0.2%'),
-						xValue: "duration",
-						yValue: "pctPersons",
-						xLabel: "Duration Relative to Index",
-						yLabel: "% Persons",
-						seriesName: "recordType",
-						showLegend: true,
-						colors: d3.scale.category10(),
-						tooltips: [
-							{
-								label: 'Series',
-								accessor: function (o) {
-									return o.recordType;
-								}
-					},
-							{
-								label: 'Percent Persons',
-								accessor: function (o) {
-									return d3.format('0.2%')(o.pctPersons);
-								}
-					},
-							{
-								label: 'Duration Relative to Index',
-								accessor: function (o) {
-									var years = Math.round(o.duration / 365);
-									var days = o.duration % 365;
-									var result = '';
-									if (years != 0)
-										result += years + 'y ';
-
-									result += days + 'd'
-									return result;
-								}
-					},
-							{
-								label: 'Person Count',
-								accessor: function (o) {
-									return o.countValue;
-								}
+						self.model.loadingReportDrilldown(false);
 					}
-				]
-					});
-					self.model.loadingReportDrilldown(false);
-				}
-			});
+				});
 		}
 
 		self.eraBuildHierarchyFromJSON = function (data, threshold) {
@@ -2757,12 +2841,11 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 			} else // the dataset is a single value result, so the properties are not arrays.
 			{
-				result = [
-					{
-						id: data.conceptId,
-						label: data.conceptName,
-						value: data.countValue
-			}];
+				result = [{
+					id: data.conceptId,
+					label: data.conceptName,
+					value: data.countValue
+				}];
 			}
 
 			result = result.sort(function (a, b) {
@@ -3002,49 +3085,59 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 			}
 		}
 
-        self.dispose = function () {
+		self.dispose = function () {
 			self.reportTriggerRunSuscription.dispose();
 		}
-        
-        self.handleDrugTableClick = function(data, context, event) {
-            var dataTable = $("#drug_table").DataTable();
-            var rowIndex = event.target._DT_CellIndex.row; 
-            var data = dataTable.row(rowIndex).data();
-			
-            self.drugExposureDrilldown(data.concept_id, data.rxnorm);
-        }
-        
-        self.handleProcedureTableClick = function(data, context, event) {
-            var dataTable = $("#procedure_table").DataTable();
-            var rowIndex = event.target._DT_CellIndex.row; 
-            var data = dataTable.row(rowIndex).data();
-			
-            self.procedureDrilldown(data.concept_id, data.procedure_name);
-        }
-        
-        self.handleDrugEraTableClick = function(data, context, event) {
-            var dataTable = $("#drugera_table").DataTable();
-            var rowIndex = event.target._DT_CellIndex.row; 
-            var data = dataTable.row(rowIndex).data();
-			
-            self.drugeraDrilldown(data.concept_id, data.ingredient);
-        }
-        
-        self.handleConditionTableClick = function(data, context, event) {
-            var dataTable = $("#condition_table").DataTable();
-            var rowIndex = event.target._DT_CellIndex.row; 
-            var data = dataTable.row(rowIndex).data();
-			
-            self.conditionDrilldown(data.concept_id, data.snomed);
-        }
-        
-        self.handleConditionEraTableClick  = function(data, context, event) {
-            var dataTable = $("#conditionera_table").DataTable();
-            var rowIndex = event.target._DT_CellIndex.row; 
-            var data = dataTable.row(rowIndex).data();
-			
-            self.conditionEraDrilldown(data.concept_id, data.snomed);
-        }
+
+		self.handleDrugTableClick = function (data, context, event) {
+			var dataTable = $("#drug_table")
+				.DataTable();
+			var rowIndex = event.target._DT_CellIndex.row;
+			var data = dataTable.row(rowIndex)
+				.data();
+
+			self.drugExposureDrilldown(data.concept_id, data.rxnorm);
+		}
+
+		self.handleProcedureTableClick = function (data, context, event) {
+			var dataTable = $("#procedure_table")
+				.DataTable();
+			var rowIndex = event.target._DT_CellIndex.row;
+			var data = dataTable.row(rowIndex)
+				.data();
+
+			self.procedureDrilldown(data.concept_id, data.procedure_name);
+		}
+
+		self.handleDrugEraTableClick = function (data, context, event) {
+			var dataTable = $("#drugera_table")
+				.DataTable();
+			var rowIndex = event.target._DT_CellIndex.row;
+			var data = dataTable.row(rowIndex)
+				.data();
+
+			self.drugeraDrilldown(data.concept_id, data.ingredient);
+		}
+
+		self.handleConditionTableClick = function (data, context, event) {
+			var dataTable = $("#condition_table")
+				.DataTable();
+			var rowIndex = event.target._DT_CellIndex.row;
+			var data = dataTable.row(rowIndex)
+				.data();
+
+			self.conditionDrilldown(data.concept_id, data.snomed);
+		}
+
+		self.handleConditionEraTableClick = function (data, context, event) {
+			var dataTable = $("#conditionera_table")
+				.DataTable();
+			var rowIndex = event.target._DT_CellIndex.row;
+			var data = dataTable.row(rowIndex)
+				.data();
+
+			self.conditionEraDrilldown(data.concept_id, data.snomed);
+		}
 	}
 
 	var component = {
